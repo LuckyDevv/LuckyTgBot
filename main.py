@@ -93,7 +93,6 @@ def deleteOldMessage(chat_id, message_id):
 
 @bot.message_handler(content_types=['text'])
 def handle_message(message):
-    bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     fetch = db_cur.get_balance(message.chat.id)
     if fetch == -2:
         if db_cur.create_player(message.chat.id, message.from_user.first_name):
@@ -115,6 +114,8 @@ def handle_message(message):
             last_messages[message.chat.id] = message_id
     else:
         text = str(message.text).lower()
+        if text != '/start':
+            bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         if text == '/balance' or text == 'баланс' or text == 'б':
             try:
                 deleteOldMessage(message.chat.id, last_messages[message.chat.id])
@@ -215,7 +216,6 @@ def handle_message(message):
 
 @bot.message_handler(commands=['start'])
 def start_bot(message):
-    bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     try:
         deleteOldMessage(message.chat.id, last_messages[message.chat.id])
     except:
