@@ -1,13 +1,13 @@
 import sqlite3
 
 
-#  ПЕРЕД ВКЛЮЧЕНИЕМ БОТА. ОБЯЗАТЕЛЬНО ПРОЧТИТЕ ФАЙЛ README_.txt
-#  ПЕРЕД ВКЛЮЧЕНИЕМ БОТА. ОБЯЗАТЕЛЬНО ПРОЧТИТЕ ФАЙЛ README_.txt
-#  ПЕРЕД ВКЛЮЧЕНИЕМ БОТА. ОБЯЗАТЕЛЬНО ПРОЧТИТЕ ФАЙЛ README_.txt
+#  ПЕРЕД ВКЛЮЧЕНИЕМ БОТА. ОБЯЗАТЕЛЬНО ПРОЧТИТЕ ФАЙЛ README.md
+#  ПЕРЕД ВКЛЮЧЕНИЕМ БОТА. ОБЯЗАТЕЛЬНО ПРОЧТИТЕ ФАЙЛ README.md
+#  ПЕРЕД ВКЛЮЧЕНИЕМ БОТА. ОБЯЗАТЕЛЬНО ПРОЧТИТЕ ФАЙЛ README.md
 class DBcur:
     def __init__(self, file):
         self.db = sqlite3.connect(file, check_same_thread=False)
-        self.db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, balance REAL);")
+        self.db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, user_name TEXT, balance REAL);")
         self.db.execute("CREATE TABLE IF NOT EXISTS gardens (id INTEGER PRIMARY KEY, lvl INTEGER, last_cost REAL);")
         self.db.execute("CREATE TABLE IF NOT EXISTS offices (id INTEGER PRIMARY KEY, lvl INTEGER, last_cost REAL);")
         self.cur = self.db.cursor()
@@ -21,7 +21,7 @@ class DBcur:
                 while i < lvl:
                     earn += 1
                     i += 1
-                return earn
+                return earn-1
             else:
                 return 0
         except:
@@ -84,18 +84,19 @@ class DBcur:
 
     def get_top(self):
         players = self.cur.execute("SELECT * FROM users").fetchall()
+        players.sort(reverse=True)
         top = ''
         i = 0
         for player in players:
             if i < 10:
-                top = f'<b>№{i + 1}. {str(player[0])}</b>: {str(player[1])} LC'
+                top += f'<b>№{i + 1}. {str(player[1])}</b>: {str(round(float(player[2]), 2))} LC\n'
             i += 1
         return top
 
-    def set_balance(self, cid, new_balance):
+    def set_balance(self, cid, user_name, new_balance):
         try:
             if self.get_balance(cid) == -2:
-                self.cur.execute(f"INSERT INTO users (id, balance) VALUES ({int(cid)}, 0);")
+                self.cur.execute(f"INSERT INTO users (id, user_name, balance) VALUES ({int(cid)}, '{user_name}' 0);")
                 self.cur.connection.commit()
             else:
                 self.cur.execute(f"UPDATE users SET balance = {new_balance} WHERE id={int(cid)};")
@@ -110,16 +111,23 @@ class DBcur:
             if fetch is None:
                 return -2
             else:
-                return float(fetch[1])
+                return round(float(fetch[2]), 2)
         except:
             return -2
 
-    def create_player(self, cid):
+    def create_player(self, cid, full_name):
         try:
-            self.cur.execute(f"INSERT INTO users (id, balance) VALUES ({int(cid)}, 0);")
+            self.cur.execute(f"INSERT INTO users (id, user_name, balance) VALUES ({int(cid)}, '{full_name}', 0);")
             self.cur.execute(f"INSERT INTO offices (id, lvl, last_cost) VALUES ({int(cid)}, 0, 0);")
             self.cur.execute(f"INSERT INTO gardens (id, lvl, last_cost) VALUES ({int(cid)}, 0, 0);")
             self.cur.connection.commit()
             return True
+        except:
+            return False
+
+    def get_name(self, cid):
+        try:
+            fetch = self.cur.execute(f"SELECT * FROM users WHERE id={int(cid)}").fetchone()
+            return fetch[1]
         except:
             return False
