@@ -84,7 +84,7 @@ class DBcur:
 
     def get_top(self):
         players = self.cur.execute("SELECT * FROM users").fetchall()
-        players.sort(reverse=True)
+        players = sorted(players, reverse=True, key=lambda player_: player_[2])
         top = ''
         i = 0
         for player in players:
